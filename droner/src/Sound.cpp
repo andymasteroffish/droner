@@ -264,6 +264,9 @@ bool Sound::mousePressed(int x, int y, int button){
         isSelected = true;
     }else{
         isSelected = false;
+        for (int i=0; i<cycles.size(); i++){
+            cycles[i].isSelected = false;
+        }
     }
     
 }
