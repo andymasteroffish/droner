@@ -30,6 +30,8 @@ class ofApp : public ofBaseApp{
     
     void addSound(string filePath, string fileName);
     
+    void scrollSelectedSound(int dir);
+    
     
     //maxim stuff
     int		bufferSize;
@@ -44,5 +46,8 @@ class ofApp : public ofBaseApp{
     
     //samples
     vector<Sound *> sounds;
+    
+    //input
+    bool shiftIsHeld, commandIsHeld;
     
 };

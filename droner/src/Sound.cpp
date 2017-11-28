@@ -11,12 +11,13 @@
 
 Sound::Sound(string filePath, string fileName){
     isSelected = false;
-    isActive = false;
+    isActive = true;
     
     addCycle();
-    addCycle();
+    //addCycle();
     
     curSamplePrc = 0;
+    startPrcShift = 0;
     
     masterVolume = 1;
     
@@ -24,11 +25,9 @@ Sound::Sound(string filePath, string fileName){
     
     loadSound(filePath, fileName);
     
-    cout<<"size "<<sample.myDataSize<<endl;
-    cout<<"length "<<sample.length<<endl;
-    //for (int i=0; i<sample.length; i++){
-        //cout<<i<<" "<<sample.temp[i]/32767.0<<endl;
-    //}
+    //cout<<"size "<<sample.myDataSize<<endl;
+    //cout<<"length "<<sample.length<<endl;
+    
     
     normalColor.set(20, 80, 20);
     selectedColor.set(10, 180, 10);
@@ -47,7 +46,10 @@ void Sound::loadSound(string filePath, string fileName){
     sampleDuration = ((float)sample.length/(float)sample.mySampleRate);
 }
 
-void Sound::updateAudio(float playbackPrc){
+void Sound::updateAudio(float originalPlaybackPrc){
+    float playbackPrc = originalPlaybackPrc + startPrcShift;
+    if (playbackPrc > 1.0f)    playbackPrc -= 1.0f;
+    
     //figure out what cycle we're on
     for (int i=0; i<cycles.size(); i++){
         if (playbackPrc > cycles[i].startPrc){
@@ -56,14 +58,6 @@ void Sound::updateAudio(float playbackPrc){
     }
     curSamplePrc = ofMap(playbackPrc, cycles[curCycle].startPrc, cycles[curCycle].endPrc, 0, 1);
     
-    /*
-    curSamplePrc = playbackPrc * cyclesPerPeriod;
-    curCycle = 0;
-    while (curSamplePrc > 1){
-        curCycle ++;
-        curSamplePrc -= 1;
-    }
-     */
     
     sample.setPosition(curSamplePrc);
     double sampleVal = sample.playOnce();
@@ -82,73 +76,6 @@ void Sound::updateAudio(float playbackPrc){
     }
     if (!isActive){
         audioValue = 0;
-    }
-}
-
-void Sound::addCycle(){
-    Cycle newCycle;
-    newCycle.setup();
-    cycles.push_back(newCycle);
-    updateCycles();
-}
-
-void Sound::removeCycle(){
-    if (cycles.size() == 1){
-        cout<<"can't go less than one cycle"<<endl;
-        return;
-    }
-    cycles.erase(cycles.begin() + cycles.size()-1);
-    updateCycles();
-}
-
-void Sound::combineCycles(int id){
-    if (id >= cycles.size()-1){
-        cout<<"can't combine last cycle"<<endl;
-        return;
-    }
-    
-    //figure out the duration of the next cycle
-    int durationToAdd = cycles[id+1].duration;
-    //remove that one
-    cycles.erase(cycles.begin()+id+1);
-    //add it to the other
-    cycles[id].duration += durationToAdd;
-    
-    updateCycles();
-}
-
-void Sound::breakCycle(int id){
-    if (cycles[id].duration == 1){
-        cout<<"can't break cycle with duration 1"<<endl;
-        return;
-    }
-    
-    //attempt to split the cycle in half (rounding of course)
-    int takeAway = cycles[id].duration/2;
-    cycles[id].duration -= takeAway;
-    
-    Cycle newCycle;
-    newCycle.setup();
-    newCycle.duration = takeAway;
-    cycles.insert(cycles.begin()+id, newCycle);
-    
-    updateCycles();
-}
-
-//goes through each cycle and gives them their perectenage of the overall loop
-void Sound::updateCycles(){
-    totalCycles = 0;
-    for (int i=0; i<cycles.size(); i++){
-        totalCycles += cycles[i].duration;
-    }
-    
-    float prcPerClick = 1.0 / (float)totalCycles;
-    
-    float curVal = 0;
-    for (int i=0; i<cycles.size(); i++){
-        cycles[i].startPrc = curVal;
-        curVal += cycles[i].duration * prcPerClick;
-        cycles[i].endPrc = curVal;
     }
 }
 
@@ -218,7 +145,7 @@ void Sound::draw(int orderPos, float totalTimelineDuration){
         //draw the outline
         ofNoFill();
         ofSetColor(0);
-        ofSetLineWidth(isSelected ? 3 : 1);
+        ofSetLineWidth(isSelected ? 2 : 1);
         ofDrawRectangle(thisX, 0, thisW, boxH);
         
         //show the playback speed for this cycle
@@ -229,6 +156,14 @@ void Sound::draw(int orderPos, float totalTimelineDuration){
         //increase the X for the next cycle
         thisX += thisW;
     }
+    
+    //mark the start point
+    float startArrowX = clickBox.width*startPrcShift;
+    float startArrowH = 10;
+    float startArrowW = 5;
+    ofFill();
+    ofSetColor(0);
+    ofDrawTriangle(startArrowX-startArrowW, 0, startArrowX+startArrowW, 0, startArrowX, startArrowH);
     
     //file name
     ofSetColor(0);
@@ -242,6 +177,90 @@ void Sound::draw(int orderPos, float totalTimelineDuration){
     clickBox.y = offset.y;
     clickBox.width = boxW;
     clickBox.height = boxH;
+}
+
+
+
+void Sound::addCycle(){
+    Cycle newCycle;
+    newCycle.setup();
+    cycles.push_back(newCycle);
+    updateCycles();
+}
+
+void Sound::removeCycle(){
+    if (cycles.size() == 1){
+        cout<<"can't go less than one cycle"<<endl;
+        return;
+    }
+    cycles.erase(cycles.begin() + cycles.size()-1);
+    updateCycles();
+}
+
+void Sound::combineCycles(int id){
+    if (id >= cycles.size()-1){
+        cout<<"can't combine last cycle"<<endl;
+        return;
+    }
+    
+    //figure out the duration of the next cycle
+    int durationToAdd = cycles[id+1].duration;
+    //remove that one
+    cycles.erase(cycles.begin()+id+1);
+    //add it to the other
+    cycles[id].duration += durationToAdd;
+    
+    updateCycles();
+}
+
+void Sound::breakCycle(int id){
+    if (cycles[id].duration == 1){
+        cout<<"can't break cycle with duration 1"<<endl;
+        return;
+    }
+    
+    //attempt to split the cycle in half (rounding of course)
+    int takeAway = cycles[id].duration/2;
+    cycles[id].duration -= takeAway;
+    
+    Cycle newCycle;
+    newCycle.setup();
+    newCycle.duration = takeAway;
+    cycles.insert(cycles.begin()+id, newCycle);
+    
+    updateCycles();
+}
+
+//goes through each cycle and gives them their perectenage of the overall loop
+void Sound::updateCycles(){
+    totalCycles = 0;
+    for (int i=0; i<cycles.size(); i++){
+        totalCycles += cycles[i].duration;
+    }
+    
+    float prcPerClick = 1.0 / (float)totalCycles;
+    
+    float curVal = 0;
+    for (int i=0; i<cycles.size(); i++){
+        cycles[i].startPrc = curVal;
+        curVal += cycles[i].duration * prcPerClick;
+        cycles[i].endPrc = curVal;
+    }
+}
+
+void Sound::scrollSelectedCycle(int dir){
+    int curSelected = -1;
+    for (int i=0; i<cycles.size(); i++){
+        if (cycles[i].isSelected){
+            curSelected = i;
+            cycles[i].isSelected = false;
+        }
+    }
+    
+    curSelected += dir;
+    if (curSelected<0)              curSelected = cycles.size()-1;
+    if (curSelected>=cycles.size()) curSelected = 0;
+    cycles[curSelected].isSelected = true;
 }
 
 bool Sound::mousePressed(int x, int y, int button){
@@ -263,15 +282,11 @@ bool Sound::mousePressed(int x, int y, int button){
         
         isSelected = true;
     }else{
-        isSelected = false;
-        for (int i=0; i<cycles.size(); i++){
-            cycles[i].isSelected = false;
-        }
+        deselect();
     }
-    
 }
 
-void Sound::keyPress(int key){
+void Sound::keyPress(int key, bool shiftIsHeld, bool commandIsHeld){
     if (isSelected){
         
         if (key == ' '){
@@ -280,31 +295,53 @@ void Sound::keyPress(int key){
         
         if (key == '['){
             removeCycle();
-            //cyclesPerPeriod--;
-            //cyclesPerPeriod = MAX(1, cyclesPerPeriod);
         }
         if (key == ']'){
             addCycle();
-            //cyclesPerPeriod++;
         }
         
         //up arrow
-        if (key == 357){
+        if (key == 357 && commandIsHeld){
             masterVolume += 0.1;
             masterVolume = MIN(10, masterVolume);
         }
         //down arrow
-        if (key == 359){
+        if (key == 359 && commandIsHeld){
             masterVolume -= 0.1;
             masterVolume = MAX(0, masterVolume);
+        }
+        
+        //left arrow
+        if (key == 356 && !commandIsHeld){
+            scrollSelectedCycle(-1);
+        }
+        //right arrow
+        if (key == 358  && !commandIsHeld){
+            scrollSelectedCycle(1);
+        }
+        
+        //left arrow
+        if (key == 356 && commandIsHeld){
+            shiftStartPoint(-1);
+        }
+        //right arrow
+        if (key == 358  && commandIsHeld){
+            shiftStartPoint(1);
         }
         
         //cycle specific commands
         for (int i=cycles.size()-1; i>=0; i--){
             if (cycles[i].isSelected){
-                if (key == 'm'){
+                if (key == 'z' && !commandIsHeld){
                     cycles[i].muteCycle = !cycles[i].muteCycle;
                 }
+                if (key == 'Z'){
+                    muteAllExcept(i);
+                }
+                if (key == 'z' && commandIsHeld){
+                    invertAllMute();
+                }
+                
                 if (key == 'c'){
                     combineCycles(i);
                     return;
@@ -321,9 +358,35 @@ void Sound::keyPress(int key){
             cout<<"time to die"<<endl;
             killMe = true;
         }
-        //cout<<"ley "<<key<<endl;
+        
         
     }
+}
+
+void Sound::deselect(){
+    isSelected = false;
+    for (int i=0; i<cycles.size(); i++){
+        cycles[i].isSelected = false;
+    }
+}
+
+void Sound::invertAllMute(){
+    for (int i=0; i<cycles.size(); i++){
+        cycles[i].muteCycle = !cycles[i].muteCycle;
+    }
+}
+void Sound::muteAllExcept(int cycleToLeaveOn){
+    for (int i=0; i<cycles.size(); i++){
+        cycles[i].muteCycle = i!=cycleToLeaveOn;
+    }
+    
+}
+
+void Sound::shiftStartPoint(int dir){
+    startPrcShift += dir * (1.0f/(float)totalCycles);
+    if (startPrcShift >= 1.0f)   startPrcShift -= 1.0f;
+    if (startPrcShift < 0.0f)   startPrcShift += 1.0f;
+    cout<<"shift "<<startPrcShift<<endl;
 }
 
 void Sound::cleanUp(){

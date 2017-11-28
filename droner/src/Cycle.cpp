@@ -12,7 +12,7 @@
 void Cycle::setup(){
     duration = 1;
     
-    muteCycle = false;
+    muteCycle = true;
     isSelected = false;
     
     

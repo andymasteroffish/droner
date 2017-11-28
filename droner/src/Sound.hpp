@@ -19,7 +19,9 @@ public:
     
     Sound(string filePath, string fileName);
     void loadSound(string filePath, string fileName);
-    void updateAudio(float playbackPrc);
+    void updateAudio(float originalPlaybackPrc);
+    
+    void draw(int orderPos, float totalTimelineDuration);
     
     void addCycle();
     void removeCycle();
@@ -27,12 +29,18 @@ public:
     void breakCycle(int id);
     void updateCycles();
     
+    void scrollSelectedCycle(int dir);
     
-    void draw(int orderPos, float totalTimelineDuration);
     
     bool mousePressed(int x, int y, int button);
     
-    void keyPress(int key);
+    void keyPress(int key, bool shiftIsHeld, bool commandIsHeld);
+    
+    void deselect();
+    void invertAllMute();
+    void muteAllExcept(int cycleToLeaveOn);
+    
+    void shiftStartPoint(int dir);
     
     void cleanUp();
     
@@ -45,9 +53,11 @@ public:
     //brekaing the sound into sycles
     vector<Cycle> cycles;
     int totalCycles;
-    //int cyclesPerPeriod;
+    
     int curCycle;
     float curSamplePrc;
+    
+    float startPrcShift;
     
     //#define MAX_NUM_CYCLES 100
     //bool skipCycle[MAX_NUM_CYCLES];

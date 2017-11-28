@@ -1,3 +1,19 @@
 Death grips, bootleg 1:40
+Ministry, N.W.O. beat
 
 The wizard harmonica
+
+Golden Eel
+1984 slap base
+
+
+Features
+[X] shift start point
+[X] inverse mute
+[X] mute others
+[] scroll
+[X] arrow key support
+[X] start with all muted
+
+
+PG7t3+Qana>28E

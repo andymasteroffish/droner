@@ -12,6 +12,9 @@ void ofApp::setup(){
     
     timelineLength = 9;
     
+    shiftIsHeld = false;
+    commandIsHeld = false;
+    
     
     ofSoundStreamSetup(2,2,this, sampleRate, bufferSize, 4); /* this has to happen at the end of setup - it switches on the DAC */
 }
@@ -73,10 +76,19 @@ void ofApp::draw(){
     }
     
     ofDisableAlphaBlending();
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
+    cout<<"key:"<<key<<endl;
+    
+    if (key == 2304){
+        shiftIsHeld = true;
+    }
+    if (key == 4352){
+        commandIsHeld = true;
+    }
     
     if (key == '-'){
         timelineLength -= 0.2f;
@@ -85,9 +97,18 @@ void ofApp::keyPressed(int key){
         timelineLength += 0.2f;
     }
     
+    //up arrow
+    if (key == 357 && !commandIsHeld){
+        scrollSelectedSound(-1);
+    }
+    //down arrow
+    if (key == 359 && !commandIsHeld){
+        scrollSelectedSound(1);
+    }
+    
     //check all sounds
     for (int i=sounds.size()-1; i>=0; i--){
-        sounds[i]->keyPress(key);
+        sounds[i]->keyPress(key, shiftIsHeld, commandIsHeld);
         if (sounds[i]->killMe){
             sounds[i]->cleanUp();
             delete sounds[i];
@@ -103,7 +124,12 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    if (key == 2304){
+        shiftIsHeld = false;
+    }
+    if (key == 4352){
+        commandIsHeld = false;
+    }
 }
 
 //--------------------------------------------------------------
@@ -175,5 +201,29 @@ void ofApp::addSound(string filePath, string fileName){
     //make the new one
     Sound * sound = new Sound(filePath, fileName);
     sound->isSelected = true;
+    
+    //split it up to roughly fit
+    int startingCycles = timelineLength/sound->sampleDuration;
+    for (int i=1; i<startingCycles; i++){
+        sound->addCycle();
+    }
+    
     sounds.push_back(sound);
+}
+
+//--------------------------------------------------------------
+void ofApp::scrollSelectedSound(int dir){
+    int curSelected = -1;
+    for (int i=0; i<sounds.size(); i++){
+        if (sounds[i]->isSelected){
+            curSelected = i;
+            sounds[i]->deselect();
+        }
+    }
+    
+    curSelected += dir;
+    if (curSelected<0)              curSelected = sounds.size()-1;
+    if (curSelected>=sounds.size()) curSelected = 0;
+    sounds[curSelected]->isSelected = true;
+    sounds[curSelected]->cycles[0].isSelected = true;
 }
