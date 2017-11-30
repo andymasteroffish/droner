@@ -33,6 +33,8 @@ class ofApp : public ofBaseApp{
     void scrollSelectedSound(int dir);
     
     
+    ofSoundStream soundStreamOut, soundStreamIn;
+    
     //maxim stuff
     int		bufferSize;
     int		sampleRate;
@@ -44,10 +46,21 @@ class ofApp : public ofBaseApp{
     float timelineLength;
     double playbackPrc;
     
+    double basePlaybackPrc;
+    double playbackPrcOffset;   //only being used to adjust the syn with the korg
+    
     //samples
     vector<Sound *> sounds;
     
     //input
     bool shiftIsHeld, commandIsHeld;
+    
+    //testing controlling the timeline via korg syn out
+    bool useKorgSync;
+    int korgHitsPerTimeline;
+    bool canHit;
+    int hitCount;
+    float lastHitTime;
+    vector<float> timesBetweenHits;
     
 };

@@ -2,6 +2,7 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    useKorgSync = true;
     
     sampleRate 	= 44100;
     bufferSize	= 512; /* Buffer Size. you have to fill this buffer with sound using the for loop in the audioOut method */
@@ -15,8 +16,25 @@ void ofApp::setup(){
     shiftIsHeld = false;
     commandIsHeld = false;
     
+    //ofSoundStreamSetup(2,2,this, sampleRate, bufferSize, 4);
     
-    ofSoundStreamSetup(2,2,this, sampleRate, bufferSize, 4); /* this has to happen at the end of setup - it switches on the DAC */
+    canHit = false;
+    hitCount = 0;
+    lastHitTime = 0;
+    
+    playbackPrc = basePlaybackPrc = playbackPrcOffset = 0;
+    
+    //setup the input if we're using it
+    if (useKorgSync){
+        korgHitsPerTimeline = 32;
+        ofSoundStreamListDevices();
+        soundStreamIn.setDeviceID(3);
+        soundStreamIn.setup(this, 0, 1, sampleRate, bufferSize, 4);
+    }
+    
+    //setup the output
+    soundStreamOut.setup(this, 2,0, sampleRate, bufferSize, 4);
+    /* this has to happen at the end of setup - it switches on the DAC */
 }
 
 //--------------------------------------------------------------
@@ -35,7 +53,11 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels) {
     
     for (int b = 0; b < bufferSize; b++){
         double sampleOut = 0;
-        playbackPrc = timer.phasor(1.0/timelineLength);
+        basePlaybackPrc = timer.phasor(1.0/timelineLength);
+        
+        playbackPrc = basePlaybackPrc + playbackPrcOffset;
+        if (playbackPrc > 1)    playbackPrc -= 1;
+        if (playbackPrc < 0)    playbackPrc += 1;
         
         for (int i=0; i<sounds.size(); i++){
             sounds[i]->updateAudio(playbackPrc);
@@ -53,13 +75,40 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels) {
 }
 
 //--------------------------------------------------------------
+//This is being used ot set the timeline and position based on the korg sync out
 void ofApp::audioIn(float * input, int bufferSize, int nChannels){
     
     for(int i = 0; i < bufferSize; i++){
-        /* you can also grab the data out of the arrays*/
-        
+        if (abs(input[i]) < 0.0001){
+            canHit = true;
+        }
+        if (abs(input[i]) > 0.999 && canHit){
+            canHit = false;
+            hitCount++;
+            float elapsedTime = ofGetElapsedTimef()-lastHitTime;
+            
+            lastHitTime = ofGetElapsedTimef();
+            timesBetweenHits.push_back(elapsedTime);
+            if (timesBetweenHits.size() > 5){
+                timesBetweenHits.erase(timesBetweenHits.begin());
+            }
+            
+            
+            float avgTimeBetweenHits =0;
+            for (int i=0; i<timesBetweenHits.size(); i++){
+                avgTimeBetweenHits += timesBetweenHits[i];
+            }
+            avgTimeBetweenHits /= timesBetweenHits.size();
+            
+            
+            int thisStep = (hitCount%korgHitsPerTimeline);
+            float thisPrc = (float)thisStep/(float)korgHitsPerTimeline;
+            
+            //cout<<thisStep<<" prc "<<thisPrc<<endl;
+            timelineLength = avgTimeBetweenHits * (float)korgHitsPerTimeline;
+            playbackPrcOffset = -basePlaybackPrc + thisPrc;
+        }
     }
-    
 }
 
 //--------------------------------------------------------------
@@ -120,6 +169,8 @@ void ofApp::keyPressed(int key){
     if (key == 't'){
         sounds[1]->volumeModSound=sounds[0];
     }
+    
+    
 }
 
 //--------------------------------------------------------------
