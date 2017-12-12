@@ -41,6 +41,15 @@ Sound::Sound(string filePath, string fileName){
     cycleSelectedColor.set(180, 180, 20, 100);
     
     killMe = false;
+    
+    pixelPos = -1;
+    pixelCurColor.set(0,0,0);
+    ampToMovePixel = 400;
+    ampLeftToMovePixelPos = ampToMovePixel;
+    pixelB = ofRandom(100,255);
+    pixelS = ofRandom(190,255);
+    biggestFFTLastFrame = -1;
+    framesWithTheSameFFT=0;
 }
 
 void Sound::loadSound(string filePath, string fileName){
@@ -88,8 +97,8 @@ void Sound::updateAudio(float originalPlaybackPrc){
         oct.calculate(fft.magnitudes);
     }
     
-    //lastSampleVal = sampleVal;
-    //lastMillisTime = ofGetElapsedTimeMillis();
+    //check the visual component
+    ampLeftToMovePixelPos -= abs(audioValue);
 }
 
 void Sound::draw(int orderPos, float totalTimelineDuration){
@@ -184,48 +193,50 @@ void Sound::draw(int orderPos, float totalTimelineDuration){
     if (!isActive)      nameText += "(muted)";
     ofDrawBitmapString(nameText, 5, boxH-5);
     
-    //testing FFT
-    float vals[87];// = float[87];
-    int biggestID = 0;
-    for (int i=0; i<oct.nAverages; i++){
-        /*
-        ofColor col;
-        col.setHsb((int)ofMap(i,0, oct.nAverages, 0, 255), 255, 255);
-        ofSetColor(col);
-        
-        float size = 1 + oct.averages[i] / 10.0f;
-        int x = (int) (400* i / oct.nAverages) + ofGetWidth()/4;
-         
-         ofDrawCircle(x, 40, size);
-        */
-        
-        float curve = ofMap(i, 0, 87, 0.5, 1.5);
-        
-        vals[i] = oct.averages[i] * curve;
-        if (vals[i] > vals[biggestID]){
-            biggestID = i;
-        }
-        
-    }
-    
-    //draw the big one
-    ofColor col;
-    //col.setHsb((int)ofMap(biggestID,0, oct.nAverages, 0, 255), 255, 255);
-    col.setHsb((int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true), 255, 255);
-    ofSetColor(col);
-    
-    float size = 1 + oct.averages[biggestID] / 5.0f;
-    int x = (int) (400* biggestID / oct.nAverages) + ofGetWidth()/4;
-    
-    ofDrawCircle(x, 40, size);
-    
-    
     ofPopMatrix();
     
     clickBox.x = offset.x;
     clickBox.y = offset.y;
     clickBox.width = boxW;
     clickBox.height = boxH;
+}
+
+void Sound::updateExternalDisplayInfo(){
+    numPixelSteps = 0;
+    while (ampLeftToMovePixelPos < 0){
+        ampLeftToMovePixelPos += ampToMovePixel;
+        numPixelSteps++;
+    }
+    
+    float vals[87];// = float[87];
+    int biggestID = 0;
+    for (int i=0; i<oct.nAverages; i++){
+        float curve = ofMap(i, 0, 87, 0.5, 1.5);
+        
+        vals[i] = oct.peaks[i] * curve;
+        if (vals[i] > vals[biggestID]){
+            biggestID = i;
+        }
+    }
+    
+    //sometimes the fft gets fucky and returns the same value over and over, so we need to reset it.
+    if (numPixelSteps>0){
+        if (biggestID == biggestFFTLastFrame){
+            framesWithTheSameFFT++;
+            //cout<<"same frames "<<framesWithTheSameFFT<<endl;
+            if (framesWithTheSameFFT > 40){
+                cout<<"reset fft because of the same results over and over"<<endl;
+                fft.setup(512*2, 512, 256);
+                oct.setup(44100, 512*2, 10);
+            }
+        }else{
+            framesWithTheSameFFT = 0;
+        }
+        //make sure it is changing sometimes
+        biggestFFTLastFrame = biggestID;
+    }
+    
+    pixelCurColor.setHsb((int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true), pixelS, pixelB);
 }
 
 

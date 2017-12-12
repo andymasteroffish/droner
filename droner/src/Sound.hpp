@@ -22,6 +22,7 @@ public:
     void updateAudio(float originalPlaybackPrc);
     
     void draw(int orderPos, float totalTimelineDuration);
+    void updateExternalDisplayInfo();
     
     void addCycle();
     void removeCycle();
@@ -87,6 +88,16 @@ public:
     ofxMaxiFFT fft;
     ofxMaxiFFTOctaveAnalyzer oct;
     
+    
+    //external display
+    int pixelPos;
+    int numPixelSteps;
+    double ampToMovePixel;
+    double ampLeftToMovePixelPos;
+    ofColor pixelCurColor;
+    float pixelS, pixelB;
+    int biggestFFTLastFrame;
+    int framesWithTheSameFFT;   //sometimes the FFT needs to be reset
     
     
 };

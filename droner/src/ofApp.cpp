@@ -24,6 +24,9 @@ void ofApp::setup(){
     
     playbackPrc = basePlaybackPrc = playbackPrcOffset = 0;
     
+    //setup the  other display
+    displayWindow->sounds = &sounds;
+    
     //setup the input if we're using it
     if (useKorgSync){
         korgHitsPerTimeline = 32;
@@ -182,6 +185,12 @@ void ofApp::keyPressed(int key){
     //testing
     if (key == 't'){
         sounds[1]->volumeModSound=sounds[0];
+    }
+    if (key == 'r'){
+        for (int i=sounds.size()-1; i>=0; i--){
+            sounds[i]->fft.setup(512*2, 512, 256);
+            sounds[i]->oct.setup(44100, 512*2, 10);
+        }
     }
     
     

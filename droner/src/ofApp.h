@@ -5,6 +5,7 @@
 #include "ofxMaxim.h"
 
 #include "Sound.hpp"
+#include "DisplayWIndow.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -32,7 +33,10 @@ class ofApp : public ofBaseApp{
     
     void scrollSelectedSound(int dir);
     
+    //alternate window
+    shared_ptr<DisplayWindow> displayWindow;
     
+    //sound strreams
     ofSoundStream soundStreamOut, soundStreamIn;
     
     //maxim stuff
