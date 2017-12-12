@@ -63,4 +63,5 @@ class ofApp : public ofBaseApp{
     float lastHitTime;
     vector<float> timesBetweenHits;
     
+    
 };

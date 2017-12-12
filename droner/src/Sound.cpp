@@ -28,6 +28,9 @@ Sound::Sound(string filePath, string fileName){
     //cout<<"size "<<sample.myDataSize<<endl;
     //cout<<"length "<<sample.length<<endl;
     
+    fft.setup(512*2, 512, 256);
+    oct.setup(44100, 512*2, 10);
+    
     
     normalColor.set(20, 80, 20);
     selectedColor.set(10, 180, 10);
@@ -47,6 +50,8 @@ void Sound::loadSound(string filePath, string fileName){
 }
 
 void Sound::updateAudio(float originalPlaybackPrc){
+    //millisTimer += ofGetElapsedTimeMillis()-lastMillisTime;
+    
     float playbackPrc = originalPlaybackPrc + startPrcShift;
     if (playbackPrc > 1.0f)    playbackPrc -= 1.0f;
     
@@ -77,6 +82,14 @@ void Sound::updateAudio(float originalPlaybackPrc){
     if (!isActive){
         audioValue = 0;
     }
+    
+    //fft shit
+    if (fft.process(audioValue)){
+        oct.calculate(fft.magnitudes);
+    }
+    
+    //lastSampleVal = sampleVal;
+    //lastMillisTime = ofGetElapsedTimeMillis();
 }
 
 void Sound::draw(int orderPos, float totalTimelineDuration){
@@ -170,6 +183,42 @@ void Sound::draw(int orderPos, float totalTimelineDuration){
     string nameText = sampleFileName;
     if (!isActive)      nameText += "(muted)";
     ofDrawBitmapString(nameText, 5, boxH-5);
+    
+    //testing FFT
+    float vals[87];// = float[87];
+    int biggestID = 0;
+    for (int i=0; i<oct.nAverages; i++){
+        /*
+        ofColor col;
+        col.setHsb((int)ofMap(i,0, oct.nAverages, 0, 255), 255, 255);
+        ofSetColor(col);
+        
+        float size = 1 + oct.averages[i] / 10.0f;
+        int x = (int) (400* i / oct.nAverages) + ofGetWidth()/4;
+         
+         ofDrawCircle(x, 40, size);
+        */
+        
+        float curve = ofMap(i, 0, 87, 0.5, 1.5);
+        
+        vals[i] = oct.averages[i] * curve;
+        if (vals[i] > vals[biggestID]){
+            biggestID = i;
+        }
+        
+    }
+    
+    //draw the big one
+    ofColor col;
+    //col.setHsb((int)ofMap(biggestID,0, oct.nAverages, 0, 255), 255, 255);
+    col.setHsb((int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true), 255, 255);
+    ofSetColor(col);
+    
+    float size = 1 + oct.averages[biggestID] / 5.0f;
+    int x = (int) (400* biggestID / oct.nAverages) + ofGetWidth()/4;
+    
+    ofDrawCircle(x, 40, size);
+    
     
     ofPopMatrix();
     

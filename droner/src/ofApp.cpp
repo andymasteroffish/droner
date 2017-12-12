@@ -67,10 +67,10 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels) {
             sampleOut += sounds[i]->audioValue;
         }
         
-        
         output[b*nChannels    ] = sampleOut;
         output[b*nChannels + 1] = sampleOut;
     }
+    
     
 }
 
@@ -125,6 +125,20 @@ void ofApp::draw(){
     }
     
     ofDisableAlphaBlending();
+    
+    //tetsing
+    /*
+    for (int i=0; i<oct.nAverages; i++){
+        ofColor col;
+        col.setHsb((int)ofMap(i,0, oct.nAverages, 0, 255), 255, 255);
+        ofSetColor(col);
+        
+        float size = 1 + oct.averages[i] / 10.0f;
+        int x = (int) (ofGetHeight()/2 * i / oct.nAverages) + ofGetWidth()/4;
+        
+        ofDrawCircle(x, ofGetHeight()/2, size);
+    }
+     */
     
 }
 

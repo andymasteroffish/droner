@@ -59,8 +59,6 @@ public:
     
     float startPrcShift;
     
-    //#define MAX_NUM_CYCLES 100
-    //bool skipCycle[MAX_NUM_CYCLES];
     
     //output values
     double baseAudioValue;
@@ -83,6 +81,11 @@ public:
     ofColor cycleSelectedColor;
     
     ofRectangle clickBox;
+    
+    
+    //fft shit
+    ofxMaxiFFT fft;
+    ofxMaxiFFTOctaveAnalyzer oct;
     
     
     
