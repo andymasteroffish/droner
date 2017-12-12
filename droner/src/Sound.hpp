@@ -95,7 +95,7 @@ public:
     double ampToMovePixel;
     double ampLeftToMovePixelPos;
     ofColor pixelCurColor;
-    float pixelS, pixelB;
+    float pixelH, pixelS, pixelB;
     int biggestFFTLastFrame;
     int framesWithTheSameFFT;   //sometimes the FFT needs to be reset
     

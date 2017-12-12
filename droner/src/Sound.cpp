@@ -46,6 +46,7 @@ Sound::Sound(string filePath, string fileName){
     pixelCurColor.set(0,0,0);
     ampToMovePixel = 400;
     ampLeftToMovePixelPos = ampToMovePixel;
+    pixelH = ofRandom(0,255);
     pixelB = ofRandom(100,255);
     pixelS = ofRandom(190,255);
     biggestFFTLastFrame = -1;
@@ -236,7 +237,9 @@ void Sound::updateExternalDisplayInfo(){
         biggestFFTLastFrame = biggestID;
     }
     
-    pixelCurColor.setHsb((int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true), pixelS, pixelB);
+    pixelCurColor.setHsb(pixelH, pixelS, (int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true));
+    
+    //pixelCurColor.setHsb((int)ofMap(biggestID,0, oct.nAverages-30, 0, 255, true), pixelS, pixelB);
 }
 
 
