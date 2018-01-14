@@ -23,13 +23,15 @@ Sound::Sound(string filePath, string fileName){
     
     volumeModSound = NULL;
     
+    
+    fft.setup(512*2, 512, 256);
+    oct.setup(44100, 512*2, 10);
+    
     loadSound(filePath, fileName);
     
     //cout<<"size "<<sample.myDataSize<<endl;
     //cout<<"length "<<sample.length<<endl;
     
-    fft.setup(512*2, 512, 256);
-    oct.setup(44100, 512*2, 10);
     
     
     normalColor.set(20, 80, 20);
@@ -46,7 +48,7 @@ Sound::Sound(string filePath, string fileName){
     pixelCurColor.set(0,0,0);
     ampToMovePixel = 400;
     ampLeftToMovePixelPos = ampToMovePixel;
-    pixelH = ofRandom(0,255);
+    //pixelH = ofRandom(0,255); //setting this in load sound
     pixelB = ofRandom(100,255);
     pixelS = ofRandom(190,255);
     biggestFFTLastFrame = -1;
@@ -57,6 +59,29 @@ void Sound::loadSound(string filePath, string fileName){
     sampleFileName = fileName;
     sample.load(ofToDataPath(filePath));
     sampleDuration = ((float)sample.length/(float)sample.mySampleRate);
+    
+    //run through the whole thing for the sake of the fft
+    for (int i=0; i<sample.length; i++){
+        double sampleVal = sample.playOnce();
+        if (fft.process(sampleVal)){
+            oct.calculate(fft.magnitudes);
+        }
+    }
+    
+    float vals[87];
+    int biggestID = 0;
+    for (int i=0; i<oct.nAverages; i++){
+        float curve = ofMap(i, 0, 87, 0.5, 1.5);
+        
+        vals[i] = oct.peaks[i] * curve;
+        if (vals[i] > vals[biggestID]){
+            biggestID = i;
+        }
+    }
+    
+    pixelH = ofMap(biggestID,0, oct.nAverages-30, 0, 255, true);
+    
+    cout<<sampleFileName<<":"<<biggestID<<endl;
 }
 
 void Sound::updateAudio(float originalPlaybackPrc){
@@ -209,7 +234,7 @@ void Sound::updateExternalDisplayInfo(){
         numPixelSteps++;
     }
     
-    float vals[87];// = float[87];
+    float vals[87];
     int biggestID = 0;
     for (int i=0; i<oct.nAverages; i++){
         float curve = ofMap(i, 0, 87, 0.5, 1.5);

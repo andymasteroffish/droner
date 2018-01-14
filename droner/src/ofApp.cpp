@@ -11,6 +11,8 @@ void ofApp::setup(){
     
     ofBackground(80);
     
+    masterVolume = 0.75f;
+    
     timelineLength = 9;
     
     shiftIsHeld = false;
@@ -70,8 +72,8 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels) {
             sampleOut += sounds[i]->audioValue;
         }
         
-        output[b*nChannels    ] = sampleOut;
-        output[b*nChannels + 1] = sampleOut;
+        output[b*nChannels    ] = sampleOut * masterVolume;
+        output[b*nChannels + 1] = sampleOut * masterVolume;
     }
     
     
@@ -181,6 +183,20 @@ void ofApp::keyPressed(int key){
             sounds.erase(sounds.begin()+i);
         }
     }
+    
+    if (key == '1'){
+        masterVolume -= 0.05;
+        if (masterVolume < 0.05){
+            masterVolume = 0.05;
+        }
+    }
+    if (key == '2'){
+        masterVolume += 0.05;
+        if (masterVolume > 1){
+            masterVolume = 1;
+        }
+    }
+    
     
     //testing
     if (key == 't'){

@@ -1,0 +1,19 @@
+-/+			timeline length
+up/down			scroll sound
+left/right		scroll cycle
+
+1/2			master volume
+
+[/]			add/remove cycle
+
+up/down (cmd)		sound volume
+left/right (cmd)	shift cycle	
+
+z			mute/unmute cycle
+Z			mute all except
+z 9cmd)			invert mute
+
+c			combine cycles
+b			break cycle
+
+r			reset sounds (if fft is wonky)

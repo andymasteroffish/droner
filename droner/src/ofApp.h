@@ -55,6 +55,7 @@ class ofApp : public ofBaseApp{
     
     //samples
     vector<Sound *> sounds;
+    float masterVolume;
     
     //input
     bool shiftIsHeld, commandIsHeld;
